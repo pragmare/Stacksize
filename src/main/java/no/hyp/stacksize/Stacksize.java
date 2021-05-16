@@ -1,11 +1,5 @@
 package no.hyp.stacksize;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.nio.file.*;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -19,6 +13,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Stacksize extends JavaPlugin implements Listener {
 
@@ -51,7 +52,7 @@ public class Stacksize extends JavaPlugin implements Listener {
     /**
      * A list of currently modified materials and their original stack sizes.
      */
-    private Map<Material, Integer> vanillaStackSizes = new HashMap<>();;
+    private Map<Material, Integer> vanillaStackSizes = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -217,11 +218,6 @@ public class Stacksize extends JavaPlugin implements Listener {
      * @return
      */
     public boolean modifyStackSize(Material material, int size, boolean log) {
-        // Verify that the material is an item (that can be stored in an inventory).
-        if (!material.isItem()) {
-            this.getLogger().warning(String.format("%s is not an item.", material.name()));
-            return false;
-        }
         // Do nothing if the stack size is already correct.
         if (material.getMaxStackSize() == size) {
             if (log) {
@@ -298,8 +294,7 @@ public class Stacksize extends JavaPlugin implements Listener {
                         if (arguments.length == 1) {
                             if (sender instanceof Player) {
                                 Player player = (Player) sender;
-                                ItemStack item = player.getInventory().getItemInMainHand();
-                                int max = item.getMaxStackSize();
+                                ItemStack item = player.getInventory().getItemInHand();
                                 Material material = item.getType();
                                 sender.sendMessage(stringViewMaterial(material));
                                 return true;
@@ -327,10 +322,6 @@ public class Stacksize extends JavaPlugin implements Listener {
                                 sender.sendMessage(stringInvalidMaterial(materialName));
                                 return true;
                             }
-                            if (!material.isItem()) {
-                                sender.sendMessage(stringMaterialNotItem(materialName));
-                                return true;
-                            }
                             int oldSize = material.getMaxStackSize();
                             int stackSize;
                             try {
@@ -352,7 +343,7 @@ public class Stacksize extends JavaPlugin implements Listener {
                         sender.sendMessage(stringNoPermission(PERMISSION_MODIFY));
                         return true;
                     }
-                // reset command resets a stack size of a material to the Vanilla size and removes it from the configuration.
+                    // reset command resets a stack size of a material to the Vanilla size and removes it from the configuration.
                 } else if (subCommand.equalsIgnoreCase(SUBCOMMAND_RESET)) {
                     if (sender.hasPermission(PERMISSION_MODIFY)) {
                         if (arguments.length == 2) {
@@ -362,10 +353,6 @@ public class Stacksize extends JavaPlugin implements Listener {
                                 material = Material.valueOf(materialName);
                             } catch (IllegalArgumentException e) {
                                 sender.sendMessage(stringInvalidMaterial(materialName));
-                                return true;
-                            }
-                            if (!material.isItem()) {
-                                sender.sendMessage(stringMaterialNotItem(materialName));
                                 return true;
                             }
                             int oldSize = material.getMaxStackSize();
@@ -422,7 +409,7 @@ public class Stacksize extends JavaPlugin implements Listener {
                 if (subCommand.equalsIgnoreCase(SUBCOMMAND_VIEW) || subCommand.equalsIgnoreCase(SUBCOMMAND_MODIFY) || subCommand.equalsIgnoreCase(SUBCOMMAND_RESET)) {
                     String mMaterial = arguments[1];
                     return Arrays.stream(Material.values()).filter(x ->
-                            x.name().startsWith(mMaterial.toUpperCase()) && x.isItem()
+                            x.name().startsWith(mMaterial.toUpperCase())
                     ).map(
                             Material::name).collect(Collectors.toList()
                     );
